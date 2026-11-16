@@ -19,6 +19,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+import com.example.huertasaludable.api.cultivo.CultivoRepository;
+import com.example.huertasaludable.api.reporte.ReporteProblemaRepository;
+import com.example.huertasaludable.api.sector.SectorRepository;
+import com.example.huertasaludable.api.tarea.TareaRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -31,6 +36,18 @@ class UsuarioControllerTest {
 	private UsuarioRepository repository;
 
 	@Autowired
+	private TareaRepository tareas;
+
+	@Autowired
+	private ReporteProblemaRepository reportes;
+
+	@Autowired
+	private CultivoRepository cultivos;
+
+	@Autowired
+	private SectorRepository sectores;
+
+	@Autowired
 	private ObjectMapper objectMapper;
 
 	@Autowired
@@ -38,10 +55,15 @@ class UsuarioControllerTest {
 
 	@BeforeEach
 	void limpiarUsuarios() {
+		tareas.deleteAll();
+		reportes.deleteAll();
+		cultivos.deleteAll();
+		sectores.deleteAll();
 		repository.deleteAll();
 	}
 
 	@Test
+	@WithMockUser(roles = "ADMIN")
 	void crearUsuarioGuardaPasswordCifradaYNoLaDevuelve() throws Exception {
 		UsuarioCreateRequest request = new UsuarioCreateRequest(
 				" Ana Pérez ", "ANA@HUERTA.CL", "secreto123", Rol.COLABORADOR, "Taller 5A", null);
@@ -60,6 +82,7 @@ class UsuarioControllerTest {
 	}
 
 	@Test
+	@WithMockUser(roles = "ADMIN")
 	void rechazarEmailDuplicadoYDatosInvalidos() throws Exception {
 		repository.save(usuario("ana@huerta.cl"));
 
@@ -79,6 +102,7 @@ class UsuarioControllerTest {
 	}
 
 	@Test
+	@WithMockUser(roles = "ADMIN")
 	void actualizarMantienePasswordCuandoSeOmiteYPermiteEliminar() throws Exception {
 		Usuario usuario = repository.save(usuario("ana@huerta.cl"));
 		String passwordOriginal = usuario.getPassword();

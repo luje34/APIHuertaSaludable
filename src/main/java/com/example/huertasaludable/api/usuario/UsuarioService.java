@@ -6,6 +6,7 @@ import java.util.Locale;
 import com.example.huertasaludable.api.usuario.dto.UsuarioCreateRequest;
 import com.example.huertasaludable.api.usuario.dto.UsuarioResponse;
 import com.example.huertasaludable.api.usuario.dto.UsuarioUpdateRequest;
+import com.example.huertasaludable.api.usuario.dto.UsuarioSelfUpdateRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +69,28 @@ public class UsuarioService {
 
 	public void eliminar(Long id) {
 		repository.delete(obtenerUsuario(id));
+	}
+
+	@Transactional(readOnly = true)
+	public UsuarioResponse buscarPorEmail(String email) {
+		return UsuarioResponse.from(repository.findByEmailIgnoreCase(email)
+				.orElseThrow(UsuarioNoEncontradoException::new));
+	}
+
+	public UsuarioResponse actualizarPropio(String emailActual, UsuarioSelfUpdateRequest request) {
+		Usuario usuario = repository.findByEmailIgnoreCase(emailActual)
+				.orElseThrow(UsuarioNoEncontradoException::new);
+		String email = normalizarEmail(request.email());
+		if (repository.existsByEmailIgnoreCaseAndIdNot(email, usuario.getId())) {
+			throw new EmailDuplicadoException();
+		}
+		usuario.setNombre(request.nombre().trim());
+		usuario.setEmail(email);
+		usuario.setTallerGrupo(request.tallerGrupo().trim());
+		if (request.password() != null && !request.password().isBlank()) {
+			usuario.setPassword(passwordEncoder.encode(request.password()));
+		}
+		return UsuarioResponse.from(repository.save(usuario));
 	}
 
 	private Usuario obtenerUsuario(Long id) {

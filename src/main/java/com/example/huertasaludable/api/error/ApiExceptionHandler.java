@@ -5,8 +5,11 @@ import java.util.stream.Collectors;
 
 import com.example.huertasaludable.api.usuario.EmailDuplicadoException;
 import com.example.huertasaludable.api.usuario.UsuarioNoEncontradoException;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,9 +18,26 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
-	@ExceptionHandler(UsuarioNoEncontradoException.class)
-	public ProblemDetail manejarNoEncontrado(UsuarioNoEncontradoException exception) {
+	@ExceptionHandler({UsuarioNoEncontradoException.class, RecursoNoEncontradoException.class})
+	public ProblemDetail manejarNoEncontrado(RuntimeException exception) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+	}
+
+	@ExceptionHandler(ReglaNegocioException.class)
+	public ProblemDetail manejarReglaNegocio(ReglaNegocioException exception) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+	}
+
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<ProblemDetail> manejarAccesoDenegado(AccessDeniedException exception) {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage()));
+	}
+
+	@ExceptionHandler(BadCredentialsException.class)
+	public ResponseEntity<ProblemDetail> manejarCredencialesInvalidas(BadCredentialsException exception) {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage()));
 	}
 
 	@ExceptionHandler({EmailDuplicadoException.class, DataIntegrityViolationException.class})

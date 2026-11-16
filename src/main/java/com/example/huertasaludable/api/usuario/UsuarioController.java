@@ -6,6 +6,7 @@ import java.util.List;
 import com.example.huertasaludable.api.usuario.dto.UsuarioCreateRequest;
 import com.example.huertasaludable.api.usuario.dto.UsuarioResponse;
 import com.example.huertasaludable.api.usuario.dto.UsuarioUpdateRequest;
+import com.example.huertasaludable.api.usuario.dto.UsuarioSelfUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -54,5 +56,17 @@ public class UsuarioController {
 	public ResponseEntity<Void> eliminar(@PathVariable Long id) {
 		service.eliminar(id);
 		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/me")
+	public UsuarioResponse miPerfil(Authentication authentication) {
+		return service.buscarPorEmail(authentication.getName());
+	}
+
+	@PutMapping("/me")
+	public UsuarioResponse actualizarMiPerfil(
+			Authentication authentication,
+			@Valid @RequestBody UsuarioSelfUpdateRequest request) {
+		return service.actualizarPropio(authentication.getName(), request);
 	}
 }
